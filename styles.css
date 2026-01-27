@@ -23,12 +23,6 @@ footer{
     margin-top: 25px;
     padding-top:20px;
 }
-article{
-    width:100%;
-    border-top: 8px solid var(--accent);
-    box-shadow: 0 4px 15 px rgba(0,0,0,0.1);
-    border-radius: 4px;
-}
 
 /* Media Queries */
 @media (max-width:768px){
