@@ -1,35 +1,39 @@
-// Function to detect device type
-function detectDevice() {
-  var deviceTypeElement = document.getElementById("deviceType");
-  var featureList = document.getElementById("featureList");
+const EventEmitter = require('events');
+const customEmitter = new EventEmitter();
 
-  if (window.innerWidth < 768) {
-    deviceTypeElement.textContent = "You are using a mobile device.";
-    // Example mobile features
-    featureList.innerHTML = `
-      <div class="feature">Mobile Feature 1</div>
-      <div class="feature">Mobile Feature 2</div>
-    `;
-  } else if (window.innerWidth < 1024) {
-    deviceTypeElement.textContent = "You are using a tablet.";
-    // Example tablet features
-    featureList.innerHTML = `
-      <div class="feature">Tablet Feature 1</div>
-      <div class="feature">Tablet Feature 2</div>
-      <div class="feature">Tablet Feature 3</div>
-    `;
+customEmitter.on('userLogin', async (username) => {
+  console.log(`User "${username}" is logging in...`);
+  await simulateAsyncProcess('Checking user credentials...');
+  console.log(`User "${username}" successfully logged in!`);
+});
+
+customEmitter.on('sensorReading', async (sensorType, value) => {
+  console.log(`Received a reading from ${sensorType}: ${value}`);
+  await simulateAsyncProcess(`Processing ${sensorType} data...`);
+  if (sensorType === 'temperature' && value > 30) {
+    console.log('Warning: Temperature is too high!');
   } else {
-    deviceTypeElement.textContent = "You are using a desktop.";
-    // Example desktop features
-    featureList.innerHTML = `
-      <div class="feature">Desktop Feature 1</div>
-      <div class="feature">Desktop Feature 2</div>
-      <div class="feature">Desktop Feature 3</div>
-      <div class="feature">Desktop Feature 4</div>
-    `;
+    console.log('Sensor data processed successfully.');
   }
+});
+
+async function simulateAsyncProcess(message) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log(message);
+      resolve();
+    }, 2000);
+  });
 }
 
-// Detect device type on load and resize
-window.onload = detectDevice;
-window.onresize = detectDevice;
+setTimeout(() => {
+  customEmitter.emit('userLogin', 'john_doe');
+}, 1000);
+
+setTimeout(() => {
+  customEmitter.emit('sensorReading', 'temperature', 35);
+}, 3000);
+
+setTimeout(() => {
+  customEmitter.emit('sensorReading', 'humidity', 50);
+}, 5000);
