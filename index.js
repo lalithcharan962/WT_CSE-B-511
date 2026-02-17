@@ -1,39 +1,47 @@
-const EventEmitter = require('events');
-const customEmitter = new EventEmitter();
+const express = require('express')
+const fs = require('fs')
+const path = require('path')
+const { body, validationResult } = require('express-validator')
+const morgan = require('morgan')
 
-customEmitter.on('userLogin', async (username) => {
-  console.log(`User "${username}" is logging in...`);
-  await simulateAsyncProcess('Checking user credentials...');
-  console.log(`User "${username}" successfully logged in!`);
-});
+const app = express()
 
-customEmitter.on('sensorReading', async (sensorType, value) => {
-  console.log(`Received a reading from ${sensorType}: ${value}`);
-  await simulateAsyncProcess(`Processing ${sensorType} data...`);
-  if (sensorType === 'temperature' && value > 30) {
-    console.log('Warning: Temperature is too high!');
-  } else {
-    console.log('Sensor data processed successfully.');
+app.use(express.json())
+app.use(morgan('combined'))
+
+app.post(
+  '/process-input',
+  [
+    body('name').isString().withMessage('Name must be a string'),
+    body('age').isInt({ min: 0 }).withMessage('Age must be a non-negative integer')
+  ],
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+
+    const { name, age } = req.body
+    const userData = { name, age, timestamp: new Date().toISOString() }
+    const filePath = path.join(__dirname, 'user-data.json')
+
+    fs.writeFile(filePath, JSON.stringify(userData, null, 2), (err) => {
+      if (err) {
+        console.error('Error writing to file:', err)
+        return res.status(500).json({ message: 'Internal Server Error' })
+      }
+      res.status(200).json({ message: 'Data processed successfully', data: userData })
+    })
   }
-});
+)
 
-async function simulateAsyncProcess(message) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(message);
-      resolve();
-    }, 2000);
-  });
-}
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err)
+  res.status(500).json({ message: 'Something went wrong, please try again later' })
+})
 
-setTimeout(() => {
-  customEmitter.emit('userLogin', 'john_doe');
-}, 1000);
+const PORT = process.env.PORT || 3000
 
-setTimeout(() => {
-  customEmitter.emit('sensorReading', 'temperature', 35);
-}, 3000);
-
-setTimeout(() => {
-  customEmitter.emit('sensorReading', 'humidity', 50);
-}, 5000);
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`)
+})
